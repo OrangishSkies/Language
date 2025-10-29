@@ -1,28 +1,47 @@
 async function loadWords() {
-  const res = await fetch('data/words.json');
-  const words = await res.json();
-  displayWords(words);
+  try {
+    const res = await fetch('data/words.json');
+    const words = await res.json();
+    initDictionary(words);
+  } catch (err) {
+    console.error("Error loading words:", err);
+    document.getElementById('word-container').innerHTML =
+      '<p style="text-align:center;">⚠️ Could not load dictionary data.</p>';
+  }
 }
 
-function displayWords(words) {
+function initDictionary(words) {
   const container = document.getElementById('word-container');
-  const search = document.getElementById('search');
+  const searchInput = document.getElementById('search');
+
   function render(filter = '') {
     container.innerHTML = '';
-    words.filter(w => w.word.toLowerCase().includes(filter.toLowerCase()))
-      .forEach(w => {
-        const div = document.createElement('div');
-        div.className = 'word-card';
-        div.innerHTML = `
-          <h3>${w.word}</h3>
-          <p>${w.meaning}</p>
-          <small>${w.pos || ''}</small>
-        `;
-        container.appendChild(div);
-      });
+    const filtered = words.filter(w => 
+      w.word.toLowerCase().includes(filter.toLowerCase()) ||
+      w.definition.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<p style="text-align:center; opacity:0.7;">No words found.</p>';
+      return;
+    }
+
+    filtered.forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'word-card';
+      div.innerHTML = `
+        <h3>${w.word}</h3>
+        <p><strong>${w.pos || ''}</strong> — ${w.definition}</p>
+        ${w.usage ? `<p><em>Usage:</em> ${w.usage}</p>` : ''}
+        ${w.etymology ? `<p><em>Etymology:</em> ${w.etymology}</p>` : ''}
+        ${w.related?.length ? `<p><em>Related:</em> ${w.related.join(', ')}</p>` : ''}
+      `;
+      container.appendChild(div);
+    });
   }
-  search.addEventListener('input', e => render(e.target.value));
+
   render();
+  searchInput.addEventListener('input', e => render(e.target.value));
 }
 
 loadWords();
