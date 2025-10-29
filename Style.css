@@ -1,46 +1,126 @@
-body.dark {
-  background: #111;
-  color: #f3f3f3;
-  font-family: 'Inter', sans-serif;
-  margin: 0;
-  padding: 0;
+:root{
+  --bg:#0f0f10;
+  --panel:#161617;
+  --muted:#9aa0a6;
+  --accent:#ffcd00;
+  --card:#151515;
+  --glass: rgba(255,255,255,0.02);
+  --max-width:1100px;
+  --radius:12px;
+  --sidebar-w:220px;
 }
 
-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #1f1f1f;
-  color: #ffcd00;
+*{box-sizing:border-box}
+body.app{
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin:0;
+  background:var(--bg);
+  color:#eaeaea;
+  display:flex;
+  min-height:100vh;
 }
 
-#search-section {
-  text-align: center;
-  padding: 1rem;
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);
+  background:#0d0d0e;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  border-right:1px solid rgba(255,255,255,0.03);
+}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.brand .logo{font-size:22px}
+.brand .title{font-weight:700}
+.nav-link{
+  display:block;
+  padding:10px 12px;
+  color:var(--muted);
+  text-decoration:none;
+  border-radius:8px;
+  margin-bottom:4px;
+}
+.nav-link:hover{background:rgba(255,255,255,0.02); color:#fff}
+.nav-link.active{color:var(--accent); font-weight:700}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+}
+.topbar h1{margin:0;font-size:18px;color:var(--accent)}
+.search{padding:10px 14px;border-radius:10px;background:#1f1f1f;border:1px solid rgba(255,255,255,0.02); color:#fff; width:320px}
+
+/* CONTENT AREA */
+.content{display:flex;gap:20px;padding:20px;align-items:flex-start}
+.right-panel{
+  width:260px;
+  background:var(--panel);
+  border-radius:var(--radius);
+  padding:16px;
+  border:1px solid rgba(255,255,255,0.03);
+  color:var(--muted);
+}
+.panel-section{margin-bottom:16px}
+.panel-section h3{margin:0 0 8px 0;color:#fff;font-size:13px}
+
+/* DICTIONARY AREA */
+.dictionary-area{flex:1; display:flex; flex-direction:column; gap:12px;}
+.alpha-index{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.alpha-index button{
+  background:transparent;border:1px solid rgba(255,255,255,0.03);
+  color:var(--muted); padding:6px 10px; border-radius:8px; cursor:pointer;
+}
+.alpha-index button.active{background:var(--accent); color:#111; font-weight:700}
+
+/* WORD LIST */
+.word-list{display:flex;flex-direction:column; gap:14px; max-width:var(--max-width); margin:0 auto; width:100%}
+
+.word-card{
+  display:flex;
+  gap:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+  padding:18px;
+  border-radius:10px;
+  border-left:6px solid var(--accent);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45);
 }
 
-input {
-  width: 80%;
-  max-width: 500px;
-  padding: 0.7rem;
-  border-radius: 8px;
-  border: none;
-  background: #2a2a2a;
-  color: white;
-  font-size: 1rem;
+.card-left{width:84px; display:flex; align-items:center; justify-content:center}
+.card-icon{
+  width:64px;height:64px;border-radius:8px;background:#111;border:1px solid rgba(255,255,255,0.02);
+  display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--muted)
 }
 
-.word-card {
-  background: #1b1b1b;
-  border-left: 4px solid #ffcd00;
-  margin: 1rem auto;
-  padding: 1rem 1.5rem;
-  max-width: 700px;
-  border-radius: 8px;
-}
+.card-body{flex:1; display:flex; flex-direction:column; gap:8px}
+.card-head{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.card-head h2{margin:0;color:var(--accent)}
+.card-actions{display:flex; gap:8px}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:8px; color:var(--muted); cursor:pointer}
+.btn.small{padding:6px; font-size:14px}
+.btn.small.fav.active{color:var(--accent); border-color: rgba(255,205,0,0.2)}
 
-.word-card h3 {
-  color: #ffcd00;
-  margin-bottom: 0.2rem;
+.definition{margin:0;color:#dddedf}
+.usage{margin:0;color:var(--muted);font-style:italic}
+.etymology{margin:0;color:var(--muted);font-size:13px}
+.related{margin:0;color:var(--muted);font-size:13px}
+
+/* TEMPLATE DEBUG */
+.template-hide{display:none}
+@media (max-width:900px){
+  .sidebar{display:none}
+  .right-panel{display:none}
+  .search{width:100%}
+  .word-card{flex-direction:column}
 }

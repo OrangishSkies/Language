@@ -1,22 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>[Your Language Name]</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>[Your Language] — Home</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark">
-  <nav>
-    <h1>📘 [Your Language Name]</h1>
-    <a href="dictionary.html">Dictionary</a>
-    <a href="about.html">About</a>
-  </nav>
+<body class="app dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">📘</div>
+      <div class="title">[Your Language]</div>
+    </div>
+    <nav>
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="dictionary.html" class="nav-link">Dictionary</a>
+      <a href="#" class="nav-link">Sandbox</a>
+      <a href="#" class="nav-link">About</a>
+    </nav>
+    <footer class="sidebar-foot">Built with ❤️ • GitHub Pages</footer>
+  </aside>
 
-  <main class="center">
-    <h2>Welcome to the official database of [Your Language]</h2>
-    <p>Explore words, meanings, and grammar in this evolving constructed language.</p>
-    <a class="button" href="dictionary.html">Open Dictionary</a>
+  <main class="main">
+    <header class="topbar">
+      <h1>Welcome</h1>
+    </header>
+
+    <section class="hero">
+      <h2>[Your Language] Database</h2>
+      <p>Explore words, definitions, etymologies, and icons — curated from <code>data/words.json</code>.</p>
+      <a class="cta" href="dictionary.html">Open Dictionary</a>
+    </section>
   </main>
 </body>
 </html>

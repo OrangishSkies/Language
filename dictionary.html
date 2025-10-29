@@ -1,23 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Dictionary — [Your Language]</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark">
-  <header>
+<body class="app dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">📘</div>
+      <div class="title">[Your Language]</div>
+    </div>
+
     <nav>
-      <a href="index.html">🏠 Home</a>
-      <h1>Dictionary</h1>
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="dictionary.html" class="nav-link active">Dictionary</a>
+      <a href="#" class="nav-link">Fonts</a>
+      <a href="#" class="nav-link">Tools</a>
+      <a href="#" class="nav-link">About</a>
     </nav>
-  </header>
 
-  <section id="search-section">
-    <input type="text" id="search" placeholder="Search for a word...">
-  </section>
+    <div class="sidebar-foot">
+      <small>Data source: <code>data/words.json</code></small>
+    </div>
+  </aside>
 
-  <section id="word-container"></section>
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <h1>Dictionary</h1>
+      </div>
+      <div class="top-right">
+        <input id="search" class="search" placeholder="Search words or definitions…" />
+      </div>
+    </header>
+
+    <div class="content">
+      <aside class="right-panel" id="filtersPanel">
+        <div class="panel-section">
+          <h3>Search Options</h3>
+          <label><input type="checkbox" class="rarity" value="core" checked> core</label>
+          <label><input type="checkbox" class="rarity" value="common" checked> common</label>
+          <label><input type="checkbox" class="rarity" value="uncommon"> uncommon</label>
+          <label><input type="checkbox" class="rarity" value="obscure"> obscure</label>
+        </div>
+
+        <div class="panel-section">
+          <h3>View</h3>
+          <label><input type="checkbox" id="showEty" checked> Show Etymologies</label>
+          <label><input type="checkbox" id="onlyFav"> Only Favorites</label>
+        </div>
+
+        <div class="panel-section">
+          <button id="copyPermalink" class="btn">Copy Permalink</button>
+          <button id="resetFilters" class="btn">Reset Options</button>
+        </div>
+      </aside>
+
+      <section class="dictionary-area">
+        <div class="alpha-index" id="alphaIndex"></div>
+        <div id="wordContainer" class="word-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <template id="word-template">
+    <article class="word-card">
+      <div class="card-left">
+        <div class="card-icon" data-icon></div>
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <h2 data-word></h2>
+          <div class="card-actions">
+            <button class="btn small audio" title="play audio">🔊</button>
+            <button class="btn small fav" title="favorite">♡</button>
+          </div>
+        </div>
+        <p class="definition"><strong data-pos></strong> <span data-definition></span></p>
+        <p class="usage" data-usage></p>
+        <p class="etymology" data-etymology></p>
+        <p class="related" data-related></p>
+      </div>
+    </article>
+  </template>
 
   <script src="script.js"></script>
 </body>
