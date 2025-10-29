@@ -1,16 +1,18 @@
 body.dark {
-  background: #121212;
-  color: #f5f5f5;
-  font-family: "Inter", sans-serif;
+  background: #111;
+  color: #f3f3f3;
+  font-family: 'Inter', sans-serif;
   margin: 0;
+  padding: 0;
 }
 
 nav {
-  background: #1f1f1f;
-  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1rem 2rem;
+  background: #1f1f1f;
+  color: #ffcd00;
 }
 
 #search-section {
@@ -18,34 +20,27 @@ nav {
   padding: 1rem;
 }
 
-input, button {
-  border: none;
+input {
+  width: 80%;
+  max-width: 500px;
+  padding: 0.7rem;
   border-radius: 8px;
-  padding: 0.6rem 1rem;
-  margin: 0.3rem;
-}
-
-button {
-  background: #ffcd00;
-  color: #222;
-  cursor: pointer;
-  font-weight: 600;
+  border: none;
+  background: #2a2a2a;
+  color: white;
+  font-size: 1rem;
 }
 
 .word-card {
-  border: 1px solid #ffcd00;
-  border-radius: 10px;
-  padding: 1rem;
+  background: #1b1b1b;
+  border-left: 4px solid #ffcd00;
   margin: 1rem auto;
+  padding: 1rem 1.5rem;
   max-width: 700px;
-  background: #1e1e1e;
+  border-radius: 8px;
 }
 
 .word-card h3 {
   color: #ffcd00;
-  margin: 0;
-}
-
-.word-card small {
-  opacity: 0.8;
+  margin-bottom: 0.2rem;
 }
