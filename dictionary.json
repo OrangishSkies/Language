@@ -1,25 +1,4 @@
-{
-  "meta": { "source": "local", "version": "1.0" },
-  "entries": [
-    {
-      "id": "w_001",
-      "word": "mila",
-      "orthography": "mi-la",
-      "pos": "noun",
-      "definition": "a house; a dwelling",
-      "examples": [
-        "Mila nomo to. — The house is big."
-      ]
-    },
-    {
-      "id": "w_002",
-      "word": "saro",
-      "orthography": "sa-ro",
-      "pos": "verb",
-      "definition": "to see; to look",
-      "examples": [
-        "Saro the mountain."
-      ]
-    }
-  ]
-}
+[
+  { "word": "tora", "meaning": "sun", "pos": "noun" },
+  { "word": "meli", "meaning": "to go", "pos": "verb" }
+]

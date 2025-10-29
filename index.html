@@ -1,101 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0b3d91" />
-  <title>New Language — Home</title>
-
-  <!-- Link to improved stylesheet -->
-  <link rel="stylesheet" href="Style.css" />
-
-  <!-- Favicons simple -->
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
-
-  <!-- SEO -->
-  <meta name="description" content="A learning site and dictionary for the new language — find words, listen to pronunciations, and explore resources." />
+  <title>[Your Language] — Home</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <header class="site-header">
-    <div class="wrap header-inner">
-      <a class="brand" href="index.html" aria-label="Home — New Language">
-        <strong>New Language</strong>
-        <span class="tagline">learn • explore • speak</span>
-      </a>
-
-      <nav class="main-nav" aria-label="Main Navigation">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="dictionary.html" class="nav-link">Dictionary</a>
-        <a href="#resources" class="nav-link">Resources</a>
-        <a href="#contribute" class="nav-link">Contribute</a>
-      </nav>
+<body class="app dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">📘</div>
+      <div class="title">[Your Language]</div>
     </div>
-  </header>
+    <nav>
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="dictionary.html" class="nav-link">Dictionary</a>
+      <a href="#" class="nav-link">Sandbox</a>
+      <a href="#" class="nav-link">About</a>
+    </nav>
+    <footer class="sidebar-foot">Built with ❤️ • GitHub Pages</footer>
+  </aside>
 
-  <main class="wrap main-content" id="top">
-    <section class="hero" aria-labelledby="hero-title">
-      <h1 id="hero-title">Welcome to <span class="accent">New Language</span></h1>
-      <p class="lead">A friendly place to learn — browse the dictionary, read examples, and practice pronunciation.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="dictionary.html">Open Dictionary</a>
-        <a class="btn" href="#resources">Get Started</a>
-      </div>
-    </section>
+  <main class="main">
+    <header class="topbar">
+      <h1>Welcome</h1>
+    </header>
 
-    <section id="features" class="features" aria-labelledby="features-title">
-      <h2 id="features-title">What you'll find here</h2>
-      <div class="feature-grid">
-        <article>
-          <h3>Comprehensive dictionary</h3>
-          <p>Search thousands of entries and explore meanings, examples, and audio (when available).</p>
-        </article>
-
-        <article>
-          <h3>Practice tools</h3>
-          <p>Flashcards, example sentences, and quizzes to help you internalize grammar and vocabulary.</p>
-        </article>
-
-        <article>
-          <h3>Community contributions</h3>
-          <p>Suggest new words, submit example sentences, or help proofread entries.</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="resources" aria-labelledby="resources-title">
-      <h2 id="resources-title">Resources</h2>
-      <ul class="resource-list">
-        <li><a href="dictionary.html">Dictionary — search and explore</a></li>
-        <li><a href="#contribute">Contribute data / examples</a></li>
-        <li><a href="#help">Help &amp; FAQs</a></li>
-      </ul>
-    </section>
-
-    <section id="contribute" aria-labelledby="contribute-title">
-      <h2 id="contribute-title">Contribute</h2>
-      <p>If you'd like to add vocabulary or examples, use the dictionary page's "Add entry" feature or open a pull request on the repository.</p>
-      <p class="muted">Tip: the site stores new entries in your browser (local storage) and allows exporting as JSON.</p>
-    </section>
-
-    <section id="help" aria-labelledby="help-title">
-      <h2 id="help-title">Help & accessibility</h2>
-      <p>Keyboard friendly: use <kbd>/</kbd> to focus search on the dictionary page. All interactive elements include visible focus styles.</p>
+    <section class="hero">
+      <h2>[Your Language] Database</h2>
+      <p>Explore words, definitions, etymologies, and icons — curated from <code>data/words.json</code>.</p>
+      <a class="cta" href="dictionary.html">Open Dictionary</a>
     </section>
   </main>
-
-  <footer class="site-footer">
-    <div class="wrap">
-      <small>© <span id="year"></span> New Language • Built for learners</small>
-      <div class="footer-links">
-        <a href="dictionary.html">Dictionary</a>
-        <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    // Small inline script for current year (fast & harmless)
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 </html>

@@ -1,377 +1,205 @@
 /* script.js
-   - Loads words.json
-   - Provides search, filter, add entry, local caching/export
-   - Accessibility: keyboard handling, focus management
-   - Debounce for input, friendly errors
+ - Loads data/words.json
+ - Renders cards with optional SVG icons from /icons/<icon>.svg
+ - Filters: rarity checkboxes, showEty, onlyFavorites
+ - Search and alphabet index
+ - Favorites persisted in localStorage (by word)
 */
 
-/* CONFIG */
-const WORDS_DATA_PATH = 'Data/words.json'; // relative path to JSON data file
-const RESULTS_PAGE_SIZE = 30;               // how many results to show per "page"
+const DATA_URL = 'data/words.json';
+const ICON_FOLDER = 'icons/';
+let allWords = [];
+let visibleWords = [];
+let favorites = new Set(JSON.parse(localStorage.getItem('favWords') || '[]'));
 
-/* App state */
-const state = {
-  words: [],              // full dataset (original + local additions)
-  originalWords: [],      // original dataset (for reset)
-  results: [],            // current search results
-  query: '',
-  filterPos: '',
-  page: 0,                // for pagination
-  selectedId: null
-};
+/* elements */
+const wordContainer = document.getElementById('wordContainer');
+const searchInput = document.getElementById('search');
+const rarityChecks = Array.from(document.querySelectorAll('.rarity'));
+const showEty = document.getElementById('showEty');
+const onlyFav = document.getElementById('onlyFav');
+const alphaIndex = document.getElementById('alphaIndex');
+const copyPermalink = document.getElementById('copyPermalink');
+const resetFilters = document.getElementById('resetFilters');
 
-/* DOM references */
-const $ = sel => document.querySelector(sel);
-const resultsList = $('#results-list');
-const resultCount = $('#result-count');
-const searchInput = $('#search-input');
-const filterSelect = $('#filter-pos');
-const clearBtn = $('#clear-btn');
-const addEntryBtn = $('#add-entry-btn');
-const addEntryModal = $('#add-entry-modal');
-const addEntryForm = $('#add-entry-form');
-const cancelAddBtn = $('#cancel-add');
-const exportBtn = $('#export-btn');
-const loadMoreBtn = $('#load-more-btn');
-const loadMoreWrap = $('#load-more-wrap');
-const resetBtn = $('#reset-btn');
-const detailPane = $('#word-detail');
-const errorToast = $('#error-toast');
+/* template */
+const template = document.getElementById('word-template');
 
-/* Utilities */
-function showToast(msg, ms = 3500) {
-  errorToast.textContent = msg;
-  errorToast.classList.remove('hidden');
-  setTimeout(() => errorToast.classList.add('hidden'), ms);
-}
-
-function debounce(fn, wait=300){
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
-}
-
-function uniqueId(){
-  return 'w_' + Math.random().toString(36).slice(2,9);
-}
-
-/* Data loading and persistence */
-async function fetchWords() {
-  try {
-    const res = await fetch(WORDS_DATA_PATH, {cache: "no-store"});
-    if (!res.ok) throw new Error('Failed to load words.json');
-    const json = await res.json();
-    return json;
-  } catch (err) {
-    console.error('fetchWords error', err);
-    showToast('Unable to load dictionary file. Using local data if available.');
-    return [];
-  }
-}
-
-function loadLocalChanges() {
-  const saved = localStorage.getItem('nl_words_local');
-  if (!saved) return [];
-  try {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed)) return parsed;
-    return [];
+/* load JSON */
+async function loadData(){
+  try{
+    const res = await fetch(DATA_URL + '?_=' + Date.now());
+    if(!res.ok) throw new Error('Data not found');
+    allWords = await res.json();
+    // normalize rarity default
+    allWords.forEach(w => { if(!w.rarity) w.rarity = 'core'; if(!w.word) w.word = ''; });
+    buildAlphaIndex();
+    applyFilters();
   } catch(e){
-    console.warn('local storage parse error', e);
-    return [];
+    wordContainer.innerHTML = `<p style="text-align:center;color:#f66">Could not load dictionary data: ${e.message}</p>`;
+    console.error(e);
   }
 }
 
-function saveLocalChanges(localWords) {
-  localStorage.setItem('nl_words_local', JSON.stringify(localWords));
+/* render utilities */
+function sanitizeText(s){
+  return s == null ? '' : s;
 }
 
-/* Initialize app */
-async function init(){
-  resultCount.textContent = 'Loading dictionary…';
-  const remoteWords = await fetchWords();
-  const localWords = loadLocalChanges();
-  state.originalWords = Array.isArray(remoteWords) ? remoteWords : [];
-  state.words = [...state.originalWords, ...localWords];
-  updateResultCount();
-  setupEventListeners();
-  applySearch(); // initial render (empty search => show first page)
-}
+async function renderWord(w){
+  const clone = template.content.cloneNode(true);
+  const root = clone.querySelector('.word-card');
+  const iconEl = clone.querySelector('[data-icon]');
+  const wordEl = clone.querySelector('[data-word]');
+  const posEl = clone.querySelector('[data-pos]');
+  const defEl = clone.querySelector('[data-definition]');
+  const usageEl = clone.querySelector('[data-usage]');
+  const etyEl = clone.querySelector('[data-etymology]');
+  const relatedEl = clone.querySelector('[data-related]');
+  const favBtn = clone.querySelector('.fav');
+  const audioBtn = clone.querySelector('.audio');
 
-/* Search logic */
-function normalize(s){
-  return (String(s) || '').toLowerCase();
-}
+  wordEl.textContent = sanitizeText(w.word);
+  posEl.textContent = sanitizeText(w.pos || '');
+  defEl.textContent = sanitizeText(w.definition || '');
+  usageEl.textContent = w.usage ? `Usage: ${w.usage}` : '';
+  etyEl.textContent = w.etymology ? `Etymology: ${w.etymology}` : '';
+  relatedEl.textContent = w.related ? `Related: ${w.related.join(', ')}` : '';
 
-function matchesEntry(entry, q, posFilter) {
-  if (!q && !posFilter) return true;
-  const qn = normalize(q);
-  if (posFilter && entry.pos && entry.pos !== posFilter) return false;
+  // show/hide etymology immediately based on toggle
+  if(!showEty.checked) etyEl.style.display = 'none';
 
-  // fields to search
-  if (qn === '') return true;
-
-  const fields = [
-    entry.word,
-    entry.orthography,
-    entry.definition,
-    ...(entry.examples || [])
-  ].filter(Boolean).map(normalize);
-
-  return fields.some(f => f.includes(qn));
-}
-
-function applySearch() {
-  state.page = 0;
-  const q = state.query;
-  const posFilter = state.filterPos;
-  state.results = state.words.filter(e => matchesEntry(e, q, posFilter));
-  renderResultsPage(); // first page
-  updateResultCount();
-}
-
-function renderResultsPage() {
-  resultsList.innerHTML = '';
-  const start = state.page * RESULTS_PAGE_SIZE;
-  const slice = state.results.slice(start, start + RESULTS_PAGE_SIZE);
-
-  if (slice.length === 0) {
-    resultsList.innerHTML = '<li class="muted">No results found.</li>';
-    loadMoreWrap.style.display = 'none';
-    return;
-  }
-
-  slice.forEach(entry => {
-    const li = document.createElement('li');
-    li.tabIndex = 0;
-    li.dataset.id = entry.id;
-    li.innerHTML = `
-      <div class="result-word">${escapeHtml(entry.word)}</div>
-      <div class="muted small">${escapeHtml(entry.definition || '')}</div>
-    `;
-    li.addEventListener('click', () => selectEntry(entry.id));
-    li.addEventListener('keydown', (e) => { if (e.key === 'Enter') selectEntry(entry.id); });
-    resultsList.appendChild(li);
+  // favorite button state
+  if(favorites.has(w.word)) favBtn.classList.add('active');
+  favBtn.addEventListener('click', () => {
+    if(favorites.has(w.word)) { favorites.delete(w.word); favBtn.classList.remove('active'); }
+    else { favorites.add(w.word); favBtn.classList.add('active'); }
+    localStorage.setItem('favWords', JSON.stringify(Array.from(favorites)));
+    // if onlyFav filter enabled, reapply filter
+    if(onlyFav.checked) applyFilters();
   });
 
-  // show load more if we have more results
-  const moreAvailable = (state.page + 1) * RESULTS_PAGE_SIZE < state.results.length;
-  loadMoreWrap.style.display = moreAvailable ? 'block' : 'none';
-}
-
-/* Render helpers */
-function updateResultCount() {
-  const n = state.results.length || state.words.length;
-  if (state.query || state.filterPos) {
-    resultCount.textContent = `${n} result${n !== 1 ? 's' : ''}`;
-  } else {
-    resultCount.textContent = `${state.words.length} total entries`;
-  }
-}
-
-function selectEntry(id) {
-  const entry = state.words.find(w => w.id === id);
-  if (!entry) return;
-  state.selectedId = id;
-  // highlight selected in list
-  [...resultsList.children].forEach(li => li.classList.toggle('selected', li.dataset.id === id));
-  renderDetail(entry);
-}
-
-function renderDetail(entry) {
-  detailPane.innerHTML = `
-    <h2>${escapeHtml(entry.word)} ${entry.orthography ? '<span class="muted">('+escapeHtml(entry.orthography)+')</span>' : ''}</h2>
-    <p class="muted">Part of speech: ${escapeHtml(entry.pos || '—')}</p>
-    <div class="definition">
-      <strong>Definition</strong>
-      <p>${escapeHtml(entry.definition || '—')}</p>
-    </div>
-    ${entry.examples && entry.examples.length ? `<div class="examples"><strong>Examples</strong><ul>${entry.examples.map(e=>`<li>${escapeHtml(e)}</li>`).join('')}</ul></div>` : ''}
-    <div class="detail-actions" style="margin-top:12px">
-      <button class="btn" id="edit-entry-btn">Edit</button>
-      <button class="btn" id="delete-entry-btn">Delete</button>
-    </div>
-  `;
-
-  // wire up edit/delete
-  $('#edit-entry-btn').addEventListener('click', () => openAddModalForEdit(entry));
-  $('#delete-entry-btn').addEventListener('click', () => deleteEntry(entry.id));
-}
-
-/* Add / Edit / Delete entries (local only) */
-function openAddModalForEdit(entry) {
-  // prefill form and open modal
-  addEntryModal.classList.remove('hidden');
-  if (entry) {
-    $('#entry-word').value = entry.word || '';
-    $('#entry-orthography').value = entry.orthography || '';
-    $('#entry-pos').value = entry.pos || 'other';
-    $('#entry-english').value = entry.definition || '';
-    $('#entry-examples').value = (entry.examples || []).join('\n');
-    addEntryForm.dataset.editId = entry.id;
-  } else {
-    addEntryForm.reset();
-    delete addEntryForm.dataset.editId;
-  }
-  $('#entry-word').focus();
-}
-
-function openAddModalBlank() {
-  addEntryForm.reset();
-  delete addEntryForm.dataset.editId;
-  addEntryModal.classList.remove('hidden');
-  $('#entry-word').focus();
-}
-
-function closeAddModal() {
-  addEntryModal.classList.add('hidden');
-  addEntryForm.reset();
-  delete addEntryForm.dataset.editId;
-}
-
-function addOrUpdateEntry(formData) {
-  const editId = addEntryForm.dataset.editId;
-  const newEntry = {
-    id: editId || uniqueId(),
-    word: formData.word.trim(),
-    orthography: formData.orthography.trim() || '',
-    pos: formData.pos || 'other',
-    definition: formData.definition.trim(),
-    examples: (formData.examples || '').split('\n').map(s=>s.trim()).filter(Boolean)
-  };
-
-  if (editId) {
-    // update existing (local override)
-    const idxOriginal = state.words.findIndex(w => w.id === editId);
-    if (idxOriginal !== -1) state.words[idxOriginal] = newEntry;
-    // also update local storage list
-    const local = loadLocalChanges().filter(w => w.id !== editId);
-    local.push(newEntry);
-    saveLocalChanges(local);
-    showToast('Entry updated locally.');
-  } else {
-    // add new
-    state.words.push(newEntry);
-    const local = loadLocalChanges();
-    local.push(newEntry);
-    saveLocalChanges(local);
-    showToast('New entry added locally.');
-  }
-
-  closeAddModal();
-  applySearch(); // refresh
-  selectEntry(newEntry.id);
-}
-
-function deleteEntry(id) {
-  if (!confirm('Delete this entry from your local copy? This does not remove it from the original file.')) return;
-  // remove from displayed list
-  state.words = state.words.filter(w => w.id !== id);
-  // remove from local storage saved additions/upserts
-  const local = loadLocalChanges().filter(w => w.id !== id);
-  saveLocalChanges(local);
-  showToast('Entry removed from your local copy.');
-  applySearch();
-  detailPane.innerHTML = '<div class="placeholder"><p>Entry deleted. Select another entry or add a new one.</p></div>';
-}
-
-/* Export / Reset */
-function exportJSON() {
-  // export current local-changes merged set as a JSON file for download
-  const data = JSON.stringify(state.words, null, 2);
-  const blob = new Blob([data], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'new-language-dictionary-export.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast('Export downloaded.');
-}
-
-function resetLocalChanges() {
-  if (!confirm('Reset local changes? This will remove all entries you added/edited locally and reload original dictionary.')) return;
-  localStorage.removeItem('nl_words_local');
-  // re-fetch original and replace
-  state.words = [...state.originalWords];
-  saveLocalChanges([]); // ensure empty
-  applySearch();
-  showToast('Local changes cleared.');
-}
-
-/* Helpers & escape */
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'",'&#039;');
-}
-
-/* Event wiring */
-function setupEventListeners() {
-  // search
-  searchInput.addEventListener('input', debounce((e) => {
-    state.query = e.target.value;
-    applySearch();
-  }, 220));
-
-  // keyboard shortcut to focus search
-  document.addEventListener('keydown', (e) => {
-    if (e.key === '/' && document.activeElement !== searchInput) {
-      e.preventDefault();
-      searchInput.focus();
-    }
+  // audio placeholder (you can integrate TTS or audio files)
+  audioBtn.addEventListener('click', () => {
+    // simple speak using Web Speech API if available
+    if('speechSynthesis' in window){
+      const ut = new SpeechSynthesisUtterance(w.word);
+      speechSynthesis.speak(ut);
+    } else alert('Audio not supported in this browser.');
   });
 
-  filterSelect.addEventListener('change', (e) => {
-    state.filterPos = e.target.value;
-    applySearch();
-  });
-
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    filterSelect.value = '';
-    state.query = '';
-    state.filterPos = '';
-    applySearch();
-  });
-
-  addEntryBtn.addEventListener('click', openAddModalBlank);
-  cancelAddBtn.addEventListener('click', closeAddModal);
-
-  addEntryForm.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const form = new FormData(addEntryForm);
-    const data = Object.fromEntries(form.entries());
-    addOrUpdateEntry(data);
-  });
-
-  exportBtn.addEventListener('click', exportJSON);
-
-  loadMoreBtn.addEventListener('click', () => {
-    state.page++;
-    renderResultsPage();
-    // move focus to newly loaded results
-    const firstNew = resultsList.children[(state.page*RESULTS_PAGE_SIZE) - 0];
-    if (firstNew) firstNew.focus();
-  });
-
-  resetBtn.addEventListener('click', resetLocalChanges);
-
-  // Improve accessibility: trap focus in modal while open
-  document.addEventListener('focusin', (e) => {
-    if (!addEntryModal.classList.contains('hidden')) {
-      if (!addEntryModal.contains(e.target)) {
-        // move focus to modal
-        $('#entry-word').focus();
+  // icon handling:
+  if(w.icon){
+    // two forms supported:
+    // 1) icon: "file.svg" — loads icons/file.svg from icons folder
+    // 2) icon: "svg:<svg...>" — inline raw SVG string (not recommended for git but supported)
+    // 3) icon: "char:α" — display a character glyph
+    if(w.icon.startsWith('svg:')){
+      iconEl.innerHTML = w.icon.slice(4);
+    } else if(w.icon.startsWith('char:')){
+      const ch = w.icon.slice(5);
+      iconEl.innerHTML = `<div class="glyph">${ch}</div>`;
+    } else {
+      // try fetch the svg file
+      const path = ICON_FOLDER + w.icon;
+      try {
+        const resp = await fetch(path);
+        if(resp.ok){
+          const svgText = await resp.text();
+          iconEl.innerHTML = svgText;
+        } else {
+          iconEl.textContent = '?';
+        }
+      } catch(e){
+        iconEl.textContent = '?';
       }
     }
+  } else {
+    iconEl.textContent = w.word[0] || '?';
+  }
+
+  wordContainer.appendChild(clone);
+}
+
+/* render list */
+async function renderList(words){
+  wordContainer.innerHTML = '';
+  if(words.length === 0){
+    wordContainer.innerHTML = `<p style="text-align:center;color:var(--muted)">No words found.</p>`;
+    return;
+  }
+  // render in sequence (preserves order)
+  for(const w of words){
+    await renderWord(w);
+  }
+}
+
+/* filters */
+function getRarityFilter(){
+  return rarityChecks.filter(c=>c.checked).map(c=>c.value);
+}
+
+function applyFilters(){
+  const q = (searchInput.value || '').trim().toLowerCase();
+  const allowedRarity = getRarityFilter();
+  visibleWords = allWords.filter(w=>{
+    if(onlyFav.checked && !favorites.has(w.word)) return false;
+    if(!allowedRarity.includes(w.rarity || 'core')) return false;
+    if(!q) return true;
+    const inWord = (w.word || '').toLowerCase().includes(q);
+    const inDef = (w.definition || '').toLowerCase().includes(q);
+    const inUsage = (w.usage || '').toLowerCase().includes(q);
+    return inWord || inDef || inUsage;
+  });
+  // alphabetical sorting by word
+  visibleWords.sort((a,b)=> (a.word||'').localeCompare(b.word||''));
+  renderList(visibleWords);
+}
+
+/* alpha index */
+function buildAlphaIndex(){
+  const letters = new Set();
+  allWords.forEach(w => {
+    const ch = (w.word || '').slice(0,1).toUpperCase();
+    if(ch) letters.add(ch);
+  });
+  const arr = Array.from(letters).sort();
+  alphaIndex.innerHTML = '';
+  const allBtn = document.createElement('button'); allBtn.textContent='All'; alphaIndex.appendChild(allBtn);
+  allBtn.addEventListener('click', ()=> { Array.from(alphaIndex.children).forEach(b=>b.classList.remove('active')); allBtn.classList.add('active'); searchInput.value = ''; applyFilters(); });
+
+  arr.forEach(l=>{
+    const b = document.createElement('button');
+    b.textContent = l;
+    b.addEventListener('click', ()=>{
+      Array.from(alphaIndex.children).forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      searchInput.value = l;
+      applyFilters();
+    });
+    alphaIndex.appendChild(b);
   });
 }
 
-/* Kick off the app */
-init();
+/* events */
+searchInput.addEventListener('input', () => applyFilters());
+rarityChecks.forEach(c=> c.addEventListener('change', applyFilters));
+showEty.addEventListener('change', ()=> {
+  // toggle all etymology nodes
+  document.querySelectorAll('[data-etymology]').forEach(el => el.style.display = showEty.checked ? '' : 'none');
+});
+onlyFav.addEventListener('change', applyFilters);
+copyPermalink.addEventListener('click', ()=>{
+  navigator.clipboard?.writeText(location.href).then(()=> alert('Permalink copied to clipboard'));
+});
+resetFilters.addEventListener('click', ()=>{
+  // reset checks
+  rarityChecks.forEach(c=> c.checked = ['core','common'].includes(c.value));
+  showEty.checked = true;
+  onlyFav.checked = false;
+  searchInput.value = '';
+  applyFilters();
+});
+
+/* init */
+loadData();

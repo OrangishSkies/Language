@@ -1,113 +1,91 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dictionary — New Language</title>
-  <link rel="stylesheet" href="Style.css" />
-  <meta name="description" content="Search and explore the New Language dictionary. Add entries, filter, and export your vocabulary." />
+  <title>Dictionary — [Your Language]</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <header class="site-header">
-    <div class="wrap header-inner">
-      <a class="brand" href="index.html" aria-label="Home — New Language">
-        <strong>New Language</strong>
-      </a>
-
-      <nav class="main-nav" aria-label="Main Navigation">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="dictionary.html" class="nav-link active">Dictionary</a>
-      </nav>
+<body class="app dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">📘</div>
+      <div class="title">[Your Language]</div>
     </div>
-  </header>
 
-  <main class="wrap dictionary-page" id="content">
-    <section aria-labelledby="search-heading" class="search-panel">
-      <h1 id="search-heading">Dictionary</h1>
+    <nav>
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="dictionary.html" class="nav-link active">Dictionary</a>
+      <a href="#" class="nav-link">Fonts</a>
+      <a href="#" class="nav-link">Tools</a>
+      <a href="#" class="nav-link">About</a>
+    </nav>
 
-      <div class="search-controls" role="search">
-        <label for="search-input" class="sr-only">Search words</label>
-        <input id="search-input" type="search" placeholder="Search words, roots, or English definitions…" autocomplete="off" />
+    <div class="sidebar-foot">
+      <small>Data source: <code>data/words.json</code></small>
+    </div>
+  </aside>
 
-        <select id="filter-pos" aria-label="Filter by part of speech">
-          <option value="">All parts of speech</option>
-          <option value="noun">Noun</option>
-          <option value="verb">Verb</option>
-          <option value="adj">Adjective</option>
-          <option value="adv">Adverb</option>
-          <option value="other">Other</option>
-        </select>
-
-        <button id="clear-btn" class="btn" title="Clear search">Clear</button>
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <h1>Dictionary</h1>
       </div>
+      <div class="top-right">
+        <input id="search" class="search" placeholder="Search words or definitions…" />
+      </div>
+    </header>
 
-      <div class="search-meta">
-        <span id="result-count" aria-live="polite">Loading…</span>
-        <div class="actions">
-          <button id="add-entry-btn" class="btn">Add entry</button>
-          <button id="export-btn" class="btn">Export JSON</button>
-          <button id="reset-btn" class="btn">Reset (clear local changes)</button>
+    <div class="content">
+      <aside class="right-panel" id="filtersPanel">
+        <div class="panel-section">
+          <h3>Search Options</h3>
+          <label><input type="checkbox" class="rarity" value="core" checked> core</label>
+          <label><input type="checkbox" class="rarity" value="common" checked> common</label>
+          <label><input type="checkbox" class="rarity" value="uncommon"> uncommon</label>
+          <label><input type="checkbox" class="rarity" value="obscure"> obscure</label>
         </div>
-      </div>
-    </section>
 
-    <section class="results-and-detail">
-      <aside class="results" aria-label="Search results">
-        <ul id="results-list" tabindex="0"></ul>
+        <div class="panel-section">
+          <h3>View</h3>
+          <label><input type="checkbox" id="showEty" checked> Show Etymologies</label>
+          <label><input type="checkbox" id="onlyFav"> Only Favorites</label>
+        </div>
 
-        <div id="load-more-wrap" class="load-more-wrap">
-          <button id="load-more-btn" class="btn" aria-label="Load more results">Load more</button>
+        <div class="panel-section">
+          <button id="copyPermalink" class="btn">Copy Permalink</button>
+          <button id="resetFilters" class="btn">Reset Options</button>
         </div>
       </aside>
 
-      <article class="detail" id="word-detail" aria-live="polite">
-        <div class="placeholder">
-          <p>Select a word to view details, or add a new entry using the button above.</p>
-        </div>
-      </article>
-    </section>
-
-    <section id="add-entry-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="add-entry-title">
-      <div class="modal-inner">
-        <h2 id="add-entry-title">Add new entry</h2>
-        <form id="add-entry-form">
-          <label for="entry-word">Word (target language)</label>
-          <input id="entry-word" name="word" required />
-
-          <label for="entry-orthography">Orthography / Pronunciation (optional)</label>
-          <input id="entry-orthography" name="orthography" />
-
-          <label for="entry-pos">Part of speech</label>
-          <select id="entry-pos" name="pos">
-            <option value="noun">Noun</option>
-            <option value="verb">Verb</option>
-            <option value="adj">Adjective</option>
-            <option value="adv">Adverb</option>
-            <option value="other">Other</option>
-          </select>
-
-          <label for="entry-english">English definition</label>
-          <textarea id="entry-english" name="definition" rows="3" required></textarea>
-
-          <label for="entry-examples">Example sentences (one per line)</label>
-          <textarea id="entry-examples" name="examples" rows="4"></textarea>
-
-          <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">Save entry</button>
-            <button type="button" id="cancel-add" class="btn">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <div id="error-toast" class="toast hidden" role="status" aria-live="polite"></div>
+      <section class="dictionary-area">
+        <div class="alpha-index" id="alphaIndex"></div>
+        <div id="wordContainer" class="word-list"></div>
+      </section>
+    </div>
   </main>
 
-  <footer class="site-footer wrap">
-    <small>New Language — Dictionary • Local copy stored in your browser.</small>
-  </footer>
+  <template id="word-template">
+    <article class="word-card">
+      <div class="card-left">
+        <div class="card-icon" data-icon></div>
+      </div>
+      <div class="card-body">
+        <div class="card-head">
+          <h2 data-word></h2>
+          <div class="card-actions">
+            <button class="btn small audio" title="play audio">🔊</button>
+            <button class="btn small fav" title="favorite">♡</button>
+          </div>
+        </div>
+        <p class="definition"><strong data-pos></strong> <span data-definition></span></p>
+        <p class="usage" data-usage></p>
+        <p class="etymology" data-etymology></p>
+        <p class="related" data-related></p>
+      </div>
+    </article>
+  </template>
 
-  <!-- Main script containing dictionary logic -->
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
