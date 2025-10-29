@@ -1,36 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>[Your Language] — Home</title>
-  <link rel="stylesheet" href="style.css">
+  <title>LangX — A New Language (Landing)</title>
+  <meta name="description" content="LangX — documentation, dictionary, and playground for the new language." />
+  <link rel="stylesheet" href="Style.css">
 </head>
-<body class="app dark">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo"></div>
-      <div class="title">[Your Language]</div>
+<body class="page-root">
+  <header class="site-header" role="banner">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="LangX homepage">
+        <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect width="24" height="24" rx="5" fill="var(--accent)"></rect>
+          <text x="50%" y="50%" fill="#111" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="central">LX</text>
+        </svg>
+        <span class="brand-text">LangX</span>
+      </a>
+
+      <nav class="main-nav" role="navigation" aria-label="Main">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="dictionary.html" class="nav-link">Dictionary</a>
+        <a href="#" class="nav-link" id="open-playground">Playground</a>
+      </nav>
     </div>
-    <nav>
-      <a href="index.html" class="nav-link active">Home</a>
-      <a href="dictionary.html" class="nav-link">Dictionary</a>
-      <a href="#" class="nav-link">Sandbox</a>
-      <a href="#" class="nav-link">About</a>
-    </nav>
-    <footer class="sidebar-foot">Built with ❤️ • GitHub Pages</footer>
-  </aside>
+  </header>
 
-  <main class="main">
-    <header class="topbar">
-      <h1>Welcome</h1>
-    </header>
+  <main class="container main" role="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">LangX — A simple, expressive constructed language</h1>
+      <p class="lede">Explore the grammar, sample sentences, and searchable dictionary. Designed for clarity, learnability, and expressive morphology.</p>
+      <div class="hero-actions">
+        <a class="btn" href="dictionary.html">Open Dictionary</a>
+        <button class="btn ghost" id="btn-learn-more">Learn more</button>
+      </div>
+    </section>
 
-    <section class="hero">
-      <h2>[Your Language] Database</h2>
-      <p>Explore words, definitions, etymologies, and icons — curated from <code>data/words.json</code>.</p>
-      <a class="cta" href="dictionary.html">Open Dictionary</a>
+    <section class="features" aria-labelledby="features-title">
+      <h2 id="features-title">What you’ll find</h2>
+      <div class="grid-3">
+        <article class="card">
+          <h3>Dictionary</h3>
+          <p>Search words, view parts of speech, example usages, tags, and add favorites for study sessions.</p>
+        </article>
+
+        <article class="card">
+          <h3>Grammar & Examples</h3>
+          <p>Concise grammar notes and example sentences to show real usage patterns and common constructions.</p>
+        </article>
+
+        <article class="card">
+          <h3>Playground</h3>
+          <p>Interactive sandbox to try phrases and hear pronunciations (text-to-speech).</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="about" aria-labelledby="about-title">
+      <h2 id="about-title">About the project</h2>
+      <p>This site is a living draft for LangX. It's intentionally small and front-end-first: JSON-backed dictionary, simple client-side code, and responsive design. Pull requests welcome.</p>
+      <ul>
+        <li>Progressive enhancement & accessibility</li>
+        <li>Small footprint & quick loading</li>
+        <li>Open for contributors</li>
+      </ul>
     </section>
   </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container footer-inner">
+      <div>© <span id="year"></span> LangX — Built with ☕ and curiosity</div>
+      <div>
+        <a href="dictionary.html">Dictionary</a>
+        <span class="sep">•</span>
+        <a href="#" id="footer-contact">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // small inline script for dynamic bits so index.html remains functional even if main JS fails to load
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.getElementById('open-playground').addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Playground is under construction — use the dictionary for now.');
+    });
+    document.getElementById('btn-learn-more').addEventListener('click', () => {
+      location.href = 'dictionary.html';
+    });
+  </script>
 </body>
 </html>
