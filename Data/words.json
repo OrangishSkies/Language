@@ -1,0 +1,24 @@
+[
+  {
+    "word": "tora",
+    "definition": "sun, light source",
+    "pos": "noun",
+    "usage": "Tora li suta — The sun rises.",
+    "etymology": "From proto form 'tor', meaning 'to shine'",
+    "related": ["suta", "lumi"],
+    "tags": ["core", "nature"]
+  },
+  {
+    "word": "meli",
+    "definition": "to go, to move",
+    "pos": "verb",
+    "usage": "Mi meli ke tora — I go toward the sun.",
+    "tags": ["core", "motion"]
+  },
+  {
+    "word": "lumi",
+    "definition": "moon, night light",
+    "pos": "noun",
+    "usage": "Lumi su mi — The moon sees me."
+  }
+]
