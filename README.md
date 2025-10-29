@@ -18,9 +18,4 @@
 ---
 
 ## 🚀 Getting Started
-
-### Prerequisites
-Make sure you have **Node.js** and **npm** (or **yarn**) installed:
-```bash
-node -v
-npm -v
+https://orangishskies.github.io/Language/dictionary.html
