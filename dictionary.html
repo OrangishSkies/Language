@@ -3,91 +3,111 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LangX Dictionary</title>
-  <meta name="description" content="Search LangX dictionary — words, parts of speech, usage, and tags." />
-  <link rel="stylesheet" href="Style.css">
+  <title>Dictionary — New Language</title>
+  <link rel="stylesheet" href="Style.css" />
+  <meta name="description" content="Search and explore the New Language dictionary. Add entries, filter, and export your vocabulary." />
 </head>
-<body class="page-dictionary">
+<body>
   <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="index.html" aria-label="LangX homepage">
-        <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <rect width="24" height="24" rx="5" fill="var(--accent)"></rect>
-          <text x="50%" y="50%" fill="#111" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="central">LX</text>
-        </svg>
-        <span class="brand-text">LangX</span>
+    <div class="wrap header-inner">
+      <a class="brand" href="index.html" aria-label="Home — New Language">
+        <strong>New Language</strong>
       </a>
 
-      <nav class="main-nav" role="navigation" aria-label="Main">
+      <nav class="main-nav" aria-label="Main Navigation">
         <a href="index.html" class="nav-link">Home</a>
         <a href="dictionary.html" class="nav-link active">Dictionary</a>
       </nav>
     </div>
   </header>
 
-  <main class="container main">
-    <section class="toolbar" aria-label="Dictionary controls">
-      <div class="search-wrap">
-        <label for="search" class="sr-only">Search words</label>
-        <input id="search" type="search" placeholder="Search word, definition, tag..." aria-label="Search words" />
-        <button id="clear-search" title="Clear search" aria-label="Clear search">✕</button>
-      </div>
+  <main class="wrap dictionary-page" id="content">
+    <section aria-labelledby="search-heading" class="search-panel">
+      <h1 id="search-heading">Dictionary</h1>
 
-      <div class="controls">
-        <label for="pos-filter" class="control-label">POS</label>
-        <select id="pos-filter" aria-label="Filter by part of speech">
-          <option value="">All</option>
-          <option value="noun">noun</option>
-          <option value="verb">verb</option>
-          <option value="adjective">adjective</option>
-          <option value="adverb">adverb</option>
+      <div class="search-controls" role="search">
+        <label for="search-input" class="sr-only">Search words</label>
+        <input id="search-input" type="search" placeholder="Search words, roots, or English definitions…" autocomplete="off" />
+
+        <select id="filter-pos" aria-label="Filter by part of speech">
+          <option value="">All parts of speech</option>
+          <option value="noun">Noun</option>
+          <option value="verb">Verb</option>
+          <option value="adj">Adjective</option>
+          <option value="adv">Adverb</option>
+          <option value="other">Other</option>
         </select>
 
-        <label for="tag-filter" class="control-label sr-only">Filter by tag</label>
-        <input id="tag-filter" placeholder="Filter by tag (e.g. core, motion)" aria-label="Filter by tag" />
+        <button id="clear-btn" class="btn" title="Clear search">Clear</button>
+      </div>
 
-        <button id="btn-show-favs" class="btn ghost" aria-pressed="false" title="Show favorites only">Favorites</button>
-        <button id="btn-export" class="btn" title="Export filtered results">Export</button>
+      <div class="search-meta">
+        <span id="result-count" aria-live="polite">Loading…</span>
+        <div class="actions">
+          <button id="add-entry-btn" class="btn">Add entry</button>
+          <button id="export-btn" class="btn">Export JSON</button>
+          <button id="reset-btn" class="btn">Reset (clear local changes)</button>
+        </div>
       </div>
     </section>
 
-    <section class="results" aria-live="polite" aria-label="Dictionary results">
-      <div id="result-count" class="result-count" aria-hidden="true"></div>
-      <ul id="word-list" class="word-list"></ul>
+    <section class="results-and-detail">
+      <aside class="results" aria-label="Search results">
+        <ul id="results-list" tabindex="0"></ul>
 
-      <div class="pagination" id="pagination" aria-label="Pagination"></div>
+        <div id="load-more-wrap" class="load-more-wrap">
+          <button id="load-more-btn" class="btn" aria-label="Load more results">Load more</button>
+        </div>
+      </aside>
+
+      <article class="detail" id="word-detail" aria-live="polite">
+        <div class="placeholder">
+          <p>Select a word to view details, or add a new entry using the button above.</p>
+        </div>
+      </article>
     </section>
+
+    <section id="add-entry-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="add-entry-title">
+      <div class="modal-inner">
+        <h2 id="add-entry-title">Add new entry</h2>
+        <form id="add-entry-form">
+          <label for="entry-word">Word (target language)</label>
+          <input id="entry-word" name="word" required />
+
+          <label for="entry-orthography">Orthography / Pronunciation (optional)</label>
+          <input id="entry-orthography" name="orthography" />
+
+          <label for="entry-pos">Part of speech</label>
+          <select id="entry-pos" name="pos">
+            <option value="noun">Noun</option>
+            <option value="verb">Verb</option>
+            <option value="adj">Adjective</option>
+            <option value="adv">Adverb</option>
+            <option value="other">Other</option>
+          </select>
+
+          <label for="entry-english">English definition</label>
+          <textarea id="entry-english" name="definition" rows="3" required></textarea>
+
+          <label for="entry-examples">Example sentences (one per line)</label>
+          <textarea id="entry-examples" name="examples" rows="4"></textarea>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">Save entry</button>
+            <button type="button" id="cancel-add" class="btn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div id="error-toast" class="toast hidden" role="status" aria-live="polite"></div>
   </main>
 
-  <template id="word-item-template">
-    <li class="word-item" tabindex="0">
-      <div class="word-header">
-        <strong class="word-text"></strong>
-        <button class="fav-toggle" aria-label="Save word to favorites" title="Save to favorites">☆</button>
-      </div>
-
-      <div class="word-meta">
-        <span class="pos"></span>
-        <span class="tags"></span>
-      </div>
-
-      <div class="definition"></div>
-      <div class="usage"></div>
-
-      <div class="actions">
-        <button class="btn pronounce" title="Pronounce">🔊 Pronounce</button>
-        <button class="btn copy" title="Copy word">Copy</button>
-      </div>
-    </li>
-  </template>
-
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>© <span id="year-footer"></span> LangX</div>
-      <div><a href="index.html">Home</a></div>
-    </div>
+  <footer class="site-footer wrap">
+    <small>New Language — Dictionary • Local copy stored in your browser.</small>
   </footer>
 
-  <script type="module" src="script.js"></script>
+  <!-- Main script containing dictionary logic -->
+  <script src="script.js" defer></script>
 </body>
 </html>

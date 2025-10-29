@@ -1,24 +1,76 @@
 [
   {
-    "word": "tora",
-    "definition": "sun, light source",
+    "id": "w_001",
+    "word": "mila",
+    "orthography": "mi-la",
     "pos": "noun",
-    "usage": "Tora li suta — The sun rises.",
-    "etymology": "From proto form 'tor', meaning 'to shine'",
-    "related": ["suta", "lumi"],
-    "tags": ["core", "nature"]
+    "definition": "a house; a dwelling",
+    "examples": [
+      "Mila nomo to. — The house is big.",
+      "He entered the mila at dawn."
+    ]
   },
   {
-    "word": "meli",
-    "definition": "to go, to move",
+    "id": "w_002",
+    "word": "saro",
+    "orthography": "sa-ro",
     "pos": "verb",
-    "usage": "Mi meli ke tora — I go toward the sun.",
-    "tags": ["core", "motion"]
+    "definition": "to see; to look",
+    "examples": [
+      "I saro the stars at night.",
+      "Saro! — Look!"
+    ]
   },
   {
-    "word": "lumi",
-    "definition": "moon, night light",
+    "id": "w_003",
+    "word": "benta",
+    "orthography": "ben-ta",
+    "pos": "adj",
+    "definition": "bright; shining",
+    "examples": [
+      "The sun is benta.",
+      "She has a benta smile."
+    ]
+  },
+  {
+    "id": "w_004",
+    "word": "kemi",
+    "orthography": "ke-mi",
+    "pos": "adv",
+    "definition": "quickly; soon",
+    "examples": [
+      "He ran kemi to the market."
+    ]
+  },
+  {
+    "id": "w_005",
+    "word": "hanu",
+    "orthography": "ha-nu",
     "pos": "noun",
-    "usage": "Lumi su mi — The moon sees me."
+    "definition": "water",
+    "examples": [
+      "Hanu is essential for life.",
+      "Give me hanu, please."
+    ]
+  },
+  {
+    "id": "w_006",
+    "word": "loma",
+    "orthography": "lo-ma",
+    "pos": "verb",
+    "definition": "to speak; to say",
+    "examples": [
+      "Loma klaru. — Speak clearly."
+    ]
+  },
+  {
+    "id": "w_007",
+    "word": "trek",
+    "orthography": "trek",
+    "pos": "other",
+    "definition": "a small tool; a device",
+    "examples": [
+      "He bought a trek for the journey."
+    ]
   }
 ]
