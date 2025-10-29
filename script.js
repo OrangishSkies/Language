@@ -1,205 +1,165 @@
-/* script.js
- - Loads data/words.json
- - Renders cards with optional SVG icons from /icons/<icon>.svg
- - Filters: rarity checkboxes, showEty, onlyFavorites
- - Search and alphabet index
- - Favorites persisted in localStorage (by word)
-*/
+/* script.js - improved: DOM-ready init, robust data fetch, mobile-friendly tweaks */
 
-const DATA_URL = 'data/words.json';
-const ICON_FOLDER = 'icons/';
-let allWords = [];
-let visibleWords = [];
-let favorites = new Set(JSON.parse(localStorage.getItem('favWords') || '[]'));
+const DATA_CANDIDATES = ['data/words.json', 'Data/words.json', './data/words.json', './Data/words.json'];
 
-/* elements */
-const wordContainer = document.getElementById('wordContainer');
-const searchInput = document.getElementById('search');
-const rarityChecks = Array.from(document.querySelectorAll('.rarity'));
-const showEty = document.getElementById('showEty');
-const onlyFav = document.getElementById('onlyFav');
-const alphaIndex = document.getElementById('alphaIndex');
-const copyPermalink = document.getElementById('copyPermalink');
-const resetFilters = document.getElementById('resetFilters');
-
-/* template */
-const template = document.getElementById('word-template');
-
-/* load JSON */
-async function loadData(){
-  try{
-    const res = await fetch(DATA_URL + '?_=' + Date.now());
-    if(!res.ok) throw new Error('Data not found');
-    allWords = await res.json();
-    // normalize rarity default
-    allWords.forEach(w => { if(!w.rarity) w.rarity = 'core'; if(!w.word) w.word = ''; });
-    buildAlphaIndex();
-    applyFilters();
-  } catch(e){
-    wordContainer.innerHTML = `<p style="text-align:center;color:#f66">Could not load dictionary data: ${e.message}</p>`;
-    console.error(e);
-  }
-}
-
-/* render utilities */
-function sanitizeText(s){
-  return s == null ? '' : s;
-}
-
-async function renderWord(w){
-  const clone = template.content.cloneNode(true);
-  const root = clone.querySelector('.word-card');
-  const iconEl = clone.querySelector('[data-icon]');
-  const wordEl = clone.querySelector('[data-word]');
-  const posEl = clone.querySelector('[data-pos]');
-  const defEl = clone.querySelector('[data-definition]');
-  const usageEl = clone.querySelector('[data-usage]');
-  const etyEl = clone.querySelector('[data-etymology]');
-  const relatedEl = clone.querySelector('[data-related]');
-  const favBtn = clone.querySelector('.fav');
-  const audioBtn = clone.querySelector('.audio');
-
-  wordEl.textContent = sanitizeText(w.word);
-  posEl.textContent = sanitizeText(w.pos || '');
-  defEl.textContent = sanitizeText(w.definition || '');
-  usageEl.textContent = w.usage ? `Usage: ${w.usage}` : '';
-  etyEl.textContent = w.etymology ? `Etymology: ${w.etymology}` : '';
-  relatedEl.textContent = w.related ? `Related: ${w.related.join(', ')}` : '';
-
-  // show/hide etymology immediately based on toggle
-  if(!showEty.checked) etyEl.style.display = 'none';
-
-  // favorite button state
-  if(favorites.has(w.word)) favBtn.classList.add('active');
-  favBtn.addEventListener('click', () => {
-    if(favorites.has(w.word)) { favorites.delete(w.word); favBtn.classList.remove('active'); }
-    else { favorites.add(w.word); favBtn.classList.add('active'); }
-    localStorage.setItem('favWords', JSON.stringify(Array.from(favorites)));
-    // if onlyFav filter enabled, reapply filter
-    if(onlyFav.checked) applyFilters();
-  });
-
-  // audio placeholder (you can integrate TTS or audio files)
-  audioBtn.addEventListener('click', () => {
-    // simple speak using Web Speech API if available
-    if('speechSynthesis' in window){
-      const ut = new SpeechSynthesisUtterance(w.word);
-      speechSynthesis.speak(ut);
-    } else alert('Audio not supported in this browser.');
-  });
-
-  // icon handling:
-  if(w.icon){
-    // two forms supported:
-    // 1) icon: "file.svg" — loads icons/file.svg from icons folder
-    // 2) icon: "svg:<svg...>" — inline raw SVG string (not recommended for git but supported)
-    // 3) icon: "char:α" — display a character glyph
-    if(w.icon.startsWith('svg:')){
-      iconEl.innerHTML = w.icon.slice(4);
-    } else if(w.icon.startsWith('char:')){
-      const ch = w.icon.slice(5);
-      iconEl.innerHTML = `<div class="glyph">${ch}</div>`;
-    } else {
-      // try fetch the svg file
-      const path = ICON_FOLDER + w.icon;
-      try {
-        const resp = await fetch(path);
-        if(resp.ok){
-          const svgText = await resp.text();
-          iconEl.innerHTML = svgText;
-        } else {
-          iconEl.textContent = '?';
-        }
-      } catch(e){
-        iconEl.textContent = '?';
+async function fetchDataWithFallback() {
+  for (const path of DATA_CANDIDATES) {
+    try {
+      const res = await fetch(path + '?_=' + Date.now());
+      if (res.ok) {
+        return await res.json();
       }
+    } catch(e){
+      // ignore and try next
     }
-  } else {
-    iconEl.textContent = w.word[0] || '?';
   }
-
-  wordContainer.appendChild(clone);
+  throw new Error('Could not fetch any words.json (checked: ' + DATA_CANDIDATES.join(',') + ')');
 }
 
-/* render list */
-async function renderList(words){
-  wordContainer.innerHTML = '';
-  if(words.length === 0){
-    wordContainer.innerHTML = `<p style="text-align:center;color:var(--muted)">No words found.</p>`;
+function safeGet(id) { return document.getElementById(id) || null; }
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const wordContainer = safeGet('wordContainer');
+  const searchInput = safeGet('search');
+  const showEty = safeGet('showEty');
+  const onlyFav = safeGet('onlyFav');
+  const alphaIndex = safeGet('alphaIndex');
+  const copyPermalink = safeGet('copyPermalink');
+  const resetFilters = safeGet('resetFilters');
+  const template = safeGet('word-template');
+  const favKey = 'favWords';
+
+  // If this isn't the dictionary page, show a small data-source label if present and stop.
+  if (!template || !wordContainer) {
+    const ds = document.querySelector('[data-source]');
+    if (ds) {
+      ds.textContent = 'Data source: data/words.json';
+    }
     return;
   }
-  // render in sequence (preserves order)
-  for(const w of words){
-    await renderWord(w);
-  }
-}
 
-/* filters */
-function getRarityFilter(){
-  return rarityChecks.filter(c=>c.checked).map(c=>c.value);
-}
+  let allWords = [];
+  let visibleWords = [];
+  let favorites = new Set(JSON.parse(localStorage.getItem(favKey) || '[]'));
 
-function applyFilters(){
-  const q = (searchInput.value || '').trim().toLowerCase();
-  const allowedRarity = getRarityFilter();
-  visibleWords = allWords.filter(w=>{
-    if(onlyFav.checked && !favorites.has(w.word)) return false;
-    if(!allowedRarity.includes(w.rarity || 'core')) return false;
-    if(!q) return true;
-    const inWord = (w.word || '').toLowerCase().includes(q);
-    const inDef = (w.definition || '').toLowerCase().includes(q);
-    const inUsage = (w.usage || '').toLowerCase().includes(q);
-    return inWord || inDef || inUsage;
-  });
-  // alphabetical sorting by word
-  visibleWords.sort((a,b)=> (a.word||'').localeCompare(b.word||''));
-  renderList(visibleWords);
-}
+  function saveFavs(){ localStorage.setItem(favKey, JSON.stringify([...favorites])); }
 
-/* alpha index */
-function buildAlphaIndex(){
-  const letters = new Set();
-  allWords.forEach(w => {
-    const ch = (w.word || '').slice(0,1).toUpperCase();
-    if(ch) letters.add(ch);
-  });
-  const arr = Array.from(letters).sort();
-  alphaIndex.innerHTML = '';
-  const allBtn = document.createElement('button'); allBtn.textContent='All'; alphaIndex.appendChild(allBtn);
-  allBtn.addEventListener('click', ()=> { Array.from(alphaIndex.children).forEach(b=>b.classList.remove('active')); allBtn.classList.add('active'); searchInput.value = ''; applyFilters(); });
-
-  arr.forEach(l=>{
-    const b = document.createElement('button');
-    b.textContent = l;
-    b.addEventListener('click', ()=>{
-      Array.from(alphaIndex.children).forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      searchInput.value = l;
+  async function loadData(){
+    try {
+      allWords = await fetchDataWithFallback();
+      if (!Array.isArray(allWords)) allWords = [];
       applyFilters();
+    } catch(e){
+      wordContainer.innerHTML = `<p style="text-align:center;color:#f66">Could not load dictionary data: ${e.message}</p>`;
+      console.error(e);
+    }
+  }
+
+  function sanitizeText(s){ return s == null ? '' : s; }
+
+  async function renderWord(w){
+    const clone = template.content.cloneNode(true);
+    const root = clone.querySelector('.word-card');
+    const iconEl = clone.querySelector('[data-icon]');
+    const wordEl = clone.querySelector('[data-word]');
+    const defEl = clone.querySelector('[data-definition]');
+    const posEl = clone.querySelector('[data-pos]');
+    const usageEl = clone.querySelector('[data-usage]');
+    const etyEl = clone.querySelector('[data-etymology]');
+    const relatedEl = clone.querySelector('[data-related]');
+    const favBtn = clone.querySelector('.fav');
+
+    if(wordEl) wordEl.textContent = sanitizeText(w.word);
+    if(defEl) defEl.textContent = sanitizeText(w.definition || w.meaning || '');
+    if(posEl) posEl.textContent = sanitizeText(w.pos || '');
+    if(usageEl) usageEl.textContent = sanitizeText(w.usage || '');
+    if(etyEl) {
+      if (w.etymology) { etyEl.textContent = w.etymology; etyEl.style.display='block'; }
+      else { etyEl.style.display='none'; }
+    }
+    if(relatedEl) {
+      if(Array.isArray(w.related) && w.related.length) {
+        relatedEl.innerHTML = w.related.map(r=>`<a href="#" class="related-link" data-rel="${r}">${r}</a>`).join(', ');
+      } else relatedEl.style.display='none';
+    }
+
+    // icon handling: 'svg:<svg...>', 'char:α', or filename under icons/
+    if(iconEl) {
+      iconEl.innerHTML = '';
+      if (w.icon) {
+        if (typeof w.icon === 'string' && w.icon.startsWith('svg:')) {
+          iconEl.innerHTML = w.icon.slice(4);
+        } else if (typeof w.icon === 'string' && w.icon.startsWith('char:')) {
+          iconEl.innerHTML = `<div class="glyph">${w.icon.slice(5)}</div>`;
+        } else if (typeof w.icon === 'string') {
+          const p = 'icons/' + w.icon;
+          fetch(p).then(r=> r.ok ? r.text() : '').then(t=>{
+            if(t) iconEl.innerHTML = t;
+            else iconEl.textContent = (w.word && w.word[0]) || '?';
+          }).catch(()=> iconEl.textContent = (w.word && w.word[0]) || '?');
+        } else {
+          iconEl.textContent = (w.word && w.word[0]) || '?';
+        }
+      } else {
+        iconEl.textContent = (w.word && w.word[0]) || '?';
+      }
+    }
+
+    if(favBtn) {
+      favBtn.textContent = favorites.has(w.word) ? '♥' : '♡';
+      favBtn.addEventListener('click', ()=>{
+        if(favorites.has(w.word)) favorites.delete(w.word); else favorites.add(w.word);
+        saveFavs();
+        favBtn.textContent = favorites.has(w.word) ? '♥' : '♡';
+      });
+    }
+
+    return clone;
+  }
+
+  function clearList(){ wordContainer.innerHTML = ''; }
+
+  async function applyFilters(){
+    clearList();
+    let q = searchInput ? (searchInput.value||'').toLowerCase() : '';
+    const rarityChecks = Array.from(document.querySelectorAll('.rarity:checked')).map(n=>n.value);
+    const showOnlyFav = onlyFav && onlyFav.checked;
+    visibleWords = allWords.filter(w => {
+      if (showOnlyFav && !favorites.has(w.word)) return false;
+      if (rarityChecks.length && w.tags && Array.isArray(w.tags)) {
+        if (!w.tags.some(t=> rarityChecks.includes(t))) return false;
+      }
+      if (q) {
+        const hay = ((w.word||'') + ' ' + (w.definition||w.meaning||'') + ' ' + (w.usage||'') ).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
     });
-    alphaIndex.appendChild(b);
+    for (const w of visibleWords) {
+      const frag = await renderWord(w);
+      wordContainer.appendChild(frag);
+    }
+    document.querySelectorAll('.related-link').forEach(a=>{
+      a.addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        const target = ev.currentTarget.getAttribute('data-rel');
+        const card = Array.from(document.querySelectorAll('[data-word]')).find(n=> n.textContent === target);
+        if (card) card.scrollIntoView({behavior:'smooth', block:'center'});
+      });
+    });
+  }
+
+  if (searchInput) searchInput.addEventListener('input', ()=> applyFilters());
+  if (showEty) showEty.addEventListener('change', ()=> applyFilters());
+  if (onlyFav) onlyFav.addEventListener('change', ()=> applyFilters());
+  if (copyPermalink) copyPermalink.addEventListener('click', ()=> navigator.clipboard?.writeText(location.href).then(()=> alert('Permalink copied')));
+  if (resetFilters) resetFilters.addEventListener('click', ()=> {
+    document.querySelectorAll('.rarity').forEach(c=> c.checked = ['core','common'].includes(c.value));
+    if (searchInput) searchInput.value = '';
+    if (showEty) showEty.checked = true;
+    if (onlyFav) onlyFav.checked = false;
+    applyFilters();
   });
-}
 
-/* events */
-searchInput.addEventListener('input', () => applyFilters());
-rarityChecks.forEach(c=> c.addEventListener('change', applyFilters));
-showEty.addEventListener('change', ()=> {
-  // toggle all etymology nodes
-  document.querySelectorAll('[data-etymology]').forEach(el => el.style.display = showEty.checked ? '' : 'none');
-});
-onlyFav.addEventListener('change', applyFilters);
-copyPermalink.addEventListener('click', ()=>{
-  navigator.clipboard?.writeText(location.href).then(()=> alert('Permalink copied to clipboard'));
-});
-resetFilters.addEventListener('click', ()=>{
-  // reset checks
-  rarityChecks.forEach(c=> c.checked = ['core','common'].includes(c.value));
-  showEty.checked = true;
-  onlyFav.checked = false;
-  searchInput.value = '';
-  applyFilters();
-});
-
-/* init */
-loadData();
+  loadData();
+}); // DOMContentLoaded end

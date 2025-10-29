@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>About — Language</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app dark">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">📘</div>
+      <div class="title">[Your Language]</div>
+    </div>
+    <nav>
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="dictionary.html" class="nav-link">Dictionary</a>
+      <a href="fonts.html" class="nav-link">Fonts</a>
+      <a href="tools.html" class="nav-link">Tools</a>
+      <a href="about.html" class="nav-link active">About</a>
+    </nav>
+    <div class="datasource" data-source>Data source: data/words.json</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1>About</h1>
+      <input id="search" class="search" placeholder="Search words or definitions…" />
+    </header>
+
+    <section class="content">
+      <p>About the language project — background, goals, contributors, and contact info.</p>
+    </section>
+  </main>
+
+  <div class="bottom-tabs" role="navigation" aria-label="mobile tabs">
+    <a href="index.html">Home</a>
+    <a href="dictionary.html">Dictionary</a>
+    <a href="fonts.html">Fonts</a>
+    <a href="tools.html">Tools</a>
+    <a href="about.html" class="active">About</a>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
